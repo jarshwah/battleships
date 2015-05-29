@@ -84,6 +84,9 @@ def place_ship_coords(board, ship):
     """This function builds out the coordinates for the boat based on the variables it 
     takes, board and ship. ship should contain a dict with at least vector, length 
     and coords. Returns ship with updated coords values."""
+    
+    # the math here is kind of confusing, anyway to simplify it? perhaps by breaking it down
+    # into smaller parts with named variables?
     if ship['vector'] == 'vertical':
         for i in range(ship['length']-1):
             ship['coords'].append((ship['coords'][-1][0]+1,ship['coords'][-1][1]))
@@ -126,17 +129,17 @@ def get_game_params():
     param['ships'] = get_int_input('How many ships? ')
     return param
 
-def get_int_input(string):
+def get_int_input(string):  # good work on making this into a function
     while True:
         try:
             intput = int(raw_input(string))
-            break
+            return intput 
         except ValueError:
             print "Please enter a positive integer."
-    return intput
 
 def get_guess(board):
     """Retrieve the guess from the user"""
+    guess_row = guess_col = None
     while True:
         try:
             guess_col = int(raw_input("Guess your col (0 - %s): " % (len(board['field']) - 1)))
@@ -149,6 +152,9 @@ def get_guess(board):
             break
         except ValueError:
             print "Please enter a number from 0 to %s: " % (len(board['field']) - 1)
+    # this is sort of dangerous, because guess_col/row are assigned in "inner blocks" above,
+    # so *may* not exist at this point. your logic above ensures they do, but it's still nicer
+    # to define "defaults" in the same indentation (or higher..) than where you use them
     guess = (guess_row,guess_col)
     return guess
 
@@ -158,24 +164,15 @@ def get_guess(board):
 
 def check_guess_legal(board, guess):
     """Function to check if guess is legal, returns True or false."""
-    guess = [guess]
-    if guess[0][0] in range(0,len(board['field'])) and guess[0][1] in range(0,len(board['field'])):
-        return True
-    else:
-        return False
+    guess = [guess] # why are you creating a single element list here?
+    return guess[0][0] in range(0,len(board['field'])) and guess[0][1] in range(0,len(board['field'])):
         
 def check_guess_hit(board, guess):
-    if guess in board['ships']:
-        return True
-    else:
-        return False
-
+    return guess in board['ships']:
+        
 def check_cell_guessed(board, guess):
     guess_row, guess_col = guess
-    if board['field'][guess_row][guess_col] == '/' or board['field'][guess_row][guess_col] == 'X':
-        return True
-    else:
-        return False
+    return board['field'][guess_row][guess_col] == '/' or board['field'][guess_row][guess_col] == 'X':
 
 def check_game_over(board, ships):
     if ships['hits'] == len(board['ships']):
@@ -207,14 +204,14 @@ def store_hit(board, ships, guess):    ##TEST THIS BEFORE USING - TEST HITS INCR
 def guess(board, ships):
     while True:
         guess = get_guess(board)
-        os.system('clear')
-        if check_guess_legal(board, guess) == True:
-            if check_cell_guessed(board, guess) == False:
-                if check_guess_hit(board, guess) == True:
+        os.system('clear')  # clever
+        if check_guess_legal(board, guess):  # no need to compare against explicit True/False
+            if not check_cell_guessed(board, guess):
+                if check_guess_hit(board, guess):
                     print "Hit!"
                     board, ships = store_hit(board, ships, guess)
                     break
-                elif check_guess_hit(board, guess) == False:
+                else:  # it either Hit or Miss right?
                     print "Miss!"
                     board = store_miss(board, guess)
                     board['turns'] += 1
@@ -227,9 +224,9 @@ def guess(board, ships):
             print_board(board)
     return (board, ships)
 
-def test_ship_gen():  #ultimately part of battleships()
+def test_ship_gen():  #  ultimately part of battleships()
+    # you should rename this function to something like "generate_board()"
     param = get_game_params()
-    
     board = board_dict(param)
     
     ships = {'hits' : 0}
@@ -248,22 +245,16 @@ def test_ship_gen():  #ultimately part of battleships()
     return (board, ships, param)
         
 def battleships():
+    # main functions are usually at the top of the file, even though
+    # the __name__ == '__main__' check is at the bottom
     board, ships, param = test_ship_gen()
     
     while True:
         print "You have had %s turns!" % (board['turns'])
         print_board(board)
         guess(board, ships)
-        if check_game_over(board, ships) == True:
+        if check_game_over(board, ships):  # No need to compare to True explicitly if it returns a bool 
             exit("Debug Exit")
-        
-
-
-                
-
-    
-
-
 
 if __name__ == '__main__':
     battleships()
